@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: testtask
+      POSTGRES_USER: baseuser
+      POSTGRES_PASSWORD: basepassword
+    ports:
+      - "5434:5432"  # Проксирую на другой порт, чтобы не конфликтовал с локальным сервером
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+    networks:
+      - net
+
+  server:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
