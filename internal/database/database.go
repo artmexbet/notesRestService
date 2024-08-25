@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Host   string `yaml:"host" env:"HOST" env-default:"localhost"`
-	Port   string `yaml:"port" env:"PORT" env-default:"5432"`
-	User   string `yaml:"user" env:"USER" env-default:"postgres"`
-	DBName string `yaml:"dbname" env:"DBNAME" env-default:"postgres"`
+	Host     string `yaml:"host" env:"HOST" env-default:"localhost"`
+	Port     string `yaml:"port" env:"PORT" env-default:"5432"`
+	User     string `yaml:"user" env:"USER" env-default:"postgres"`
+	Password string `yaml:"password" env:"PASSWORD" env-default:"postgres"`
+	DBName   string `yaml:"dbname" env:"DBNAME" env-default:"postgres"`
 }
 
 type Database struct {
@@ -22,7 +23,7 @@ type Database struct {
 
 func New(cfg *Config) (*Database, error) {
 	conn, err := pgx.Connect(context.Background(),
-		fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable", cfg.Host, cfg.Port, cfg.User, cfg.DBName))
+		fmt.Sprintf("postgres://%s:%s@%s:%s/%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName))
 	if err != nil {
 		return nil, err
 	}
@@ -35,10 +36,12 @@ func (d *Database) AddUser(user models.UserJSON) (int, error) {
 		return 0, err
 	}
 
+	row := d.conn.QueryRow(context.Background(),
+		"INSERT INTO public.users (login, password) VALUES ($1, $2) RETURNING id",
+		user.Login, hashedPassword)
+
 	var id int
-	err = d.conn.QueryRow(context.Background(),
-		"INSERT INTO public.users (login, password) VALUES ($1, $2)",
-		user.Login, hashedPassword).Scan(&id)
+	err = row.Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -60,4 +63,29 @@ func (d *Database) CheckUser(user models.UserJSON) (int, error) {
 		return 0, nil
 	}
 	return id, nil
+}
+
+func (d *Database) AddNote(note models.NoteJSON, userId int) (int, error) {
+	var id int
+	err := d.conn.QueryRow(context.Background(),
+		"INSERT INTO public.notes (title, description, user_id) VALUES ($1, $2, $3) RETURNING id",
+		note.Title, note.Description, userId).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (d *Database) GetNotes(userId int) (string, error) {
+	row := d.conn.QueryRow(context.Background(),
+		`SELECT coalesce(json_agg(row_to_json(notes)), '[]') FROM (
+			SELECT id, title, description FROM public.notes WHERE user_id=$1) notes`, userId)
+
+	var notes string
+	err := row.Scan(&notes)
+	if err != nil {
+		return "", err
+	}
+
+	return notes, nil
 }

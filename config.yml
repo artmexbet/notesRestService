@@ -1,0 +1,14 @@
+jwt:
+  secret_key: "secret_key"
+router:
+  host: ""
+  port: 8080
+  timeout: 60s
+  max_request_size: 41943040
+db:
+  host: "db"
+  port: 5432
+  user: "baseuser"
+  password: "basepassword"
+  dbname: "testtask"
+service:

@@ -5,7 +5,7 @@
 -- Dumped from database version 15.7 (Debian 15.7-1.pgdg120+1)
 -- Dumped by pg_dump version 16.3
 
--- Started on 2024-08-25 13:10:19
+-- Started on 2024-08-25 15:26:29
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -53,7 +53,7 @@ CREATE SEQUENCE public.notes_id_seq
 ALTER SEQUENCE public.notes_id_seq OWNER TO baseuser;
 
 --
--- TOC entry 3359 (class 0 OID 0)
+-- TOC entry 3361 (class 0 OID 0)
 -- Dependencies: 216
 -- Name: notes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: baseuser
 --
@@ -69,7 +69,7 @@ ALTER SEQUENCE public.notes_id_seq OWNED BY public.notes.id;
 CREATE TABLE public.users (
     id bigint NOT NULL,
     login character varying(150) NOT NULL,
-    password bytea NOT NULL
+    password character varying(255) NOT NULL
 );
 
 
@@ -91,7 +91,7 @@ CREATE SEQUENCE public.users_id_seq
 ALTER SEQUENCE public.users_id_seq OWNER TO baseuser;
 
 --
--- TOC entry 3360 (class 0 OID 0)
+-- TOC entry 3362 (class 0 OID 0)
 -- Dependencies: 214
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: baseuser
 --
@@ -116,7 +116,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
--- TOC entry 3210 (class 2606 OID 16407)
+-- TOC entry 3212 (class 2606 OID 16407)
 -- Name: notes notes_pkey; Type: CONSTRAINT; Schema: public; Owner: baseuser
 --
 
@@ -125,7 +125,16 @@ ALTER TABLE ONLY public.notes
 
 
 --
--- TOC entry 3208 (class 2606 OID 16397)
+-- TOC entry 3208 (class 2606 OID 16414)
+-- Name: users users_login_key; Type: CONSTRAINT; Schema: public; Owner: baseuser
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_login_key UNIQUE (login);
+
+
+--
+-- TOC entry 3210 (class 2606 OID 16397)
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: baseuser
 --
 
@@ -134,7 +143,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3211 (class 2606 OID 16408)
+-- TOC entry 3213 (class 2606 OID 16408)
 -- Name: notes notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: baseuser
 --
 
@@ -142,7 +151,7 @@ ALTER TABLE ONLY public.notes
     ADD CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
--- Completed on 2024-08-25 13:10:19
+-- Completed on 2024-08-25 15:26:29
 
 --
 -- PostgreSQL database dump complete

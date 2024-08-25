@@ -8,6 +8,7 @@ import (
 	"notesRestService/internal/logger/sl"
 	"notesRestService/internal/router"
 	"notesRestService/internal/service"
+	"notesRestService/internal/textValidator"
 )
 
 type Config struct {
@@ -41,7 +42,9 @@ func main() {
 
 	jwtManager := jwt.New(cfg.JWTConfig)
 
-	svc := service.New(cfg.ServiceConfig, jwtManager, db)
+	validator := textValidator.New()
+
+	svc := service.New(cfg.ServiceConfig, jwtManager, db, validator)
 
 	r := router.New(cfg.RouterConfig, svc, jwtManager)
 	err = r.Run()
