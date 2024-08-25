@@ -11,7 +11,15 @@ import (
 )
 
 type IService interface {
-	// Add your service methods here
+	Register() http.HandlerFunc
+	Login() http.HandlerFunc
+	AddNote() http.HandlerFunc
+	GetNotes() http.HandlerFunc
+}
+
+type IJWTManager interface {
+	Encode(claims map[string]interface{}) (string, error)
+	GetJWTAuth() *jwtauth.JWTAuth
 }
 
 // Config ...
@@ -20,22 +28,23 @@ type Config struct {
 	Port           string        `yaml:"port" env:"PORT" env-default:"8080"`
 	Timeout        time.Duration `yaml:"timeout" env:"TIMEOUT" env-default:"60s"`
 	MaxRequestSize int64         `yaml:"max_request_size" env:"MAX_REQUEST_SIZE" env-default:"41943040"` // 5MB
-	SecretKey      string        `yaml:"secret_key" env:"SECRET_KEY" env-default:"secret-key"`
 }
 
 // Router ...
 type Router struct {
 	cfg     *Config
 	router  *chi.Mux
-	JWTAuth *jwtauth.JWTAuth
+	service IService
+	jwt     IJWTManager
 }
 
 // New creates new Router instance
-func New(cfg *Config, service IService) *Router {
+func New(cfg *Config, service IService, jwtManager IJWTManager) *Router {
 	r := &Router{
 		cfg:     cfg,
 		router:  chi.NewRouter(),
-		JWTAuth: jwtauth.New("HS256", []byte(cfg.SecretKey), nil),
+		service: service,
+		jwt:     jwtManager,
 	}
 
 	r.router.Use(middleware.Logger)
@@ -54,7 +63,16 @@ func New(cfg *Config, service IService) *Router {
 		MaxAge:           300,
 	}))
 
-	// TODO: Add routes here
+	r.router.Post("/register", r.service.Register())
+	r.router.Post("/login", r.service.Login())
+
+	r.router.Group(func(r_ chi.Router) {
+		r_.Use(jwtauth.Verifier(jwtManager.GetJWTAuth()))
+		r_.Use(jwtauth.Authenticator(jwtManager.GetJWTAuth()))
+
+		r_.Post("/notes", r.service.AddNote())
+		r_.Get("/notes", r.service.GetNotes())
+	})
 
 	return r
 }
