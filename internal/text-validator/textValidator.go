@@ -1,4 +1,4 @@
-package textValidator
+package textvalidator
 
 import (
 	"encoding/json"

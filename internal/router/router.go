@@ -2,17 +2,19 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+	"notesRestService/internal/models"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
-	"net/http"
-	"time"
 )
 
 type IService interface {
-	Register() http.HandlerFunc
-	Login() http.HandlerFunc
+	Register(user models.User) error
+	Login(login string, password string) (models.UserID, error)
 	AddNote() http.HandlerFunc
 	GetNotes() http.HandlerFunc
 }
@@ -63,15 +65,15 @@ func New(cfg *Config, service IService, jwtManager IJWTManager) *Router {
 		MaxAge:           300,
 	}))
 
-	r.router.Post("/register", r.service.Register())
+	r.router.Post("/register", r.handleRegister())
 	r.router.Post("/login", r.service.Login())
 
 	r.router.Group(func(r_ chi.Router) {
 		r_.Use(jwtauth.Verifier(jwtManager.GetJWTAuth()))
 		r_.Use(jwtauth.Authenticator(jwtManager.GetJWTAuth()))
 
-		r_.Post("/notes", r.service.AddNote())
-		r_.Get("/notes", r.service.GetNotes())
+		r_.Post("/notes", r.service.NoteCreate())
+		r_.Get("/notes", r.service.NoteList())
 	})
 
 	return r

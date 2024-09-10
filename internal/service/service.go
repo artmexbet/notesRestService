@@ -3,12 +3,13 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
 	"notesRestService/internal/models"
 	"time"
+
+	"github.com/go-chi/jwtauth/v5"
+	"github.com/go-playground/validator/v10"
 )
 
 type IJWTManager interface {
@@ -18,7 +19,7 @@ type IJWTManager interface {
 
 type IDatabase interface {
 	AddUser(user models.UserJSON) (int, error)
-	CheckUser(user models.UserJSON) (int, error)
+	CheckUser(login string, password string) (models.UserID, error)
 	AddNote(note models.NoteJSON, userId int) (int, error)
 	GetNotes(userId int) (string, error)
 }
@@ -48,6 +49,15 @@ func New(cfg *Config, jwtManager IJWTManager, db IDatabase, textValidator ITextV
 	}
 }
 
+func (s *Service) Register(lopgin, password string) error {
+	user := &models.NewUser()
+
+	if err := user.Validate(); err != nil {
+		return err
+	}
+}
+
+/*
 func (s *Service) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := slog.With(slog.String("module", "Service.Register"))
@@ -89,6 +99,7 @@ func (s *Service) Register() http.HandlerFunc {
 		}
 	}
 }
+*/
 
 func (s *Service) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,13 @@
 package models
 
+import (
+	"github.com/go-playground/validator/v10"
+)
+
+var validate = validator.New()
+
+type UserID int
+
 type UserJSON struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
